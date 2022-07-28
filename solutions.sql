@@ -1,94 +1,134 @@
-USE sakila;
+use sakila;
 
--- 1. How many copies of the film Hunchback Impossible exist in the inventory system?
-SELECT title, count(inventory.film_id) AS title
-	FROM film
-    JOIN inventory
-		ON film.film_id = inventory.film_id
-		WHERE title = "Hunchback Impossible"
-    GROUP BY title;
+-- Query 1
+select count(distinct(last_name))
+	from actor;
+    
+-- Query 2
+		-- there where only produced in 1 language. 
+select distinct(language_id)
+	from film;
+    
+-- Query 3
+		-- there is 223 titles with PG-13 rating
+select rating, count(rating)
+	from film
+    where rating = "PG-13"
+    group by rating;
+    
+-- Query 4
 
--- 2. List all films whose length is longer than the average of all the films.
-SELECT	title, length
-	FROM film
-	WHERE length > (SELECT AVG(length) FROM film);
+select title, length
+from film
+where release_year = "2006"
+order by length desc
+limit 10;
 
--- 3. Use subqueries to display all actors who appear in the film Alone Trip.
-SELECT first_name, last_name
-FROM actor
-WHERE actor_id IN (SELECT actor_id 
-	FROM film_actor
-	WHERE film_id = (SELECT film_id 
-		FROM film WHERE title="Alone Trip"));
+-- Query 5
+		-- the company has been operational for 266 days
+select datediff(max(rental_date),min(rental_date))
+	from rental;
+    
+-- Query 6
 
--- 4. Sales have been lagging among young families, and you wish to target all family movies for a promotion. Identify all movies categorized as family films.
-SELECT title
-FROM film
-WHERE film_id IN (SELECT film_id 
-	FROM film_category
-	WHERE category_id = (SELECT category_id 
-		FROM category WHERE name="Family"));
+SELECT rental_date, extract(month from rental_date), weekday(rental_date)
+	from rental
+    limit 20;
+    
+-- Query 7
 
--- 5.A Get name and email from customers from Canada using subqueries. 
-SELECT first_name, last_name, email
-FROM customer
-WHERE address_id IN (SELECT address_id 
-	FROM address
-	WHERE city_id IN (SELECT city_id 
-		FROM city  WHERE country_id = (SELECT country_id
-			FROM country WHERE country = "Canada" )));
+SELECT rental_date, extract(month from rental_date), weekday(rental_date) as `weekday`, if(weekday(rental_date)> "5" , "Weekend","Workday")
+	from rental;
+    
+-- Query 8
+		-- there where 182 rentals in the last week of operation. 
+select count(rental_id)
+from rental
+where rental_date <= '2006-02-14 15:16:03' 
+and rental_date > "2006-01-14 15:16:03" ;
 
--- 5.B Do the same with joins. Note that to create a join, you will have to identify the correct tables with their primary keys and foreign keys, that will help you get the relevant information.
-SELECT first_name, last_name, email
-	FROM customer
-	JOIN address
-		ON customer.address_id=address.address_id
-		JOIN city
-			ON address.city_id=city.city_id
-			JOIN country
-				ON country.country_id=city.country_id
-				WHERE country.country="Canada";
+-- Query 9
 
--- 6. Which are films starred by the most prolific actor? Most prolific actor is defined as the actor that has acted in the most number of films. First you will have to find the most prolific actor and then use that actor_id to find the different films that he/she starred.
-SELECT title AS films
-FROM film
-WHERE film_id IN (SELECT film_id 
-	FROM film_actor
-    WHERE actor_id = (SELECT actor_id
-		FROM (SELECT actor_id, count(film_id) F
-			FROM film_actor
-			GROUP BY actor_id) AS T1
-			WHERE F IN (SELECT MAX(F)
-				FROM (SELECT actor_id, count(film_id) F
-					FROM film_actor
-					GROUP BY actor_id) AS T2)));
+select title,rating
+	from film;
+    
+-- Query 10
+		-- all the titels have release year 2006  for 1000 movies
+select distinct(release_year),count(release_year) as count
+	from film
+    group by release_year;
+    
+-- Query 11
 
--- 7. Films rented by most profitable customer. You can use the customer table and payment table to find the most profitable customer ie the customer that has made the largest sum of payments
-SELECT hola.customer_id, film.title
-	FROM (SELECT rental.customer_id, sum(payment.amount) as tot_rent
-		FROM rental
-        JOIN payment
-			ON payment.rental_id=rental.rental_id
-		GROUP BY rental.customer_id
-		ORDER BY tot_rent DESC
-		LIMIT 1) as hola
-		JOIN rental
-			ON hola.customer_id=rental.customer_id
-		JOIN inventory
-			ON rental.inventory_id=inventory.inventory_id
-		JOIN film
-			ON film.film_id=inventory.film_id;
+select title 
+	from film
+    where title regexp "ARMAGEDDON";
+    
+-- Query 12
+​
+select title 
+	from film
+    where title regexp "APOLLO";
+​
+-- Query 13
+​
+select title 
+	from film
+    where title regexp "APOLLO$";
+​
+-- Query 14
+​
+select title 
+	from film
+    where title regexp "DATE";
+    
+-- Query 15
+select title 
+	from film
+    order by length(title) desc
+    limit 10;
+    
+-- Query 16
+select title , length
+	from film
+    order by length desc
+    limit 10;
+    
+-- Query 17
+select count(special_features)
+	from film
+    where special_features regexp "Behind the Scenes";
+    
+-- Query 18
 
--- 8. Get the client_id and the total_amount_spent of those clients who spent more than the average of the total_amount spent by each client.
-SELECT rental.customer_id as client_id, sum(payment.amount) AS total_amount_spent
-	FROM rental
-	JOIN payment
-		ON payment.rental_id=rental.rental_id
-	GROUP BY rental.customer_id
-	HAVING total_rent > (SELECT AVG(hola.tot_rent) AS average
-		FROM (SELECT rental.customer_id, sum(payment.amount) as tot_rent
-				FROM rental
-				JOIN payment
-					ON payment.rental_id=rental.rental_id
-				GROUP BY rental.customer_id) as hola)
-				ORDER BY total_rent DESC;
+select title, release_year
+	from film
+    order by release_year and title desc;
+    
+-- Query 19
+		-- this code will drop a column and alter the database table
+alter table staff
+drop column picture;
+
+-- Query 20
+
+insert into staff(staff_id, first_name, last_name, address_id, store_id, username)
+values (3, 'Tammy', 'Sanders', 4, 2, 'Tammy');
+
+-- Query 21
+
+insert into rental(rental_id, rental_date, inventory_id, customer_id, staff_id)
+VALUES(16050,(select current_timestamp()),
+    (select inventory_id from inventory where film_id = (select film_id from film where title = 'Academy Dinosaur' limit 1) limit 1),
+    (select customer_id from customer where first_name = 'CHARLOTTE' and last_name = 'HUNTER' limit 1),
+    (select staff_id from staff where store_id = 1 limit 1));
+    
+-- Query 22
+
+create table backup_table
+as select *
+from customer
+where active = 0;
+
+delete from customer
+where active = 0;
